@@ -10,13 +10,14 @@
 var input = document.getElementById("load_image");
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
-var gl = canvas.getContext('webgl');
 
 // The width and height of the image
 var width = 0;
 var height = 0;
 // The image data
 var ppm_img_data;
+
+var matrix; // transformation matrix
 
 //Function to process upload
 var upload = function () {
@@ -33,23 +34,24 @@ var upload = function () {
             parsePPM(file_data);
 
             var angle = 0
-
             function render() {
-            
+                // Call method to get rotated image
                 var newImageData = rotateImage(angle)
+
+                // Draw rotated image
+                ctx.fillstyle = "white";
                 ctx.putImageData(newImageData, canvas.width/2 - width/2, canvas.height/2 - height/2);
                 angle = angle == 360 ? 0 : angle + 2;
+                showMatrix(matrix);
             
                 requestAnimationFrame(render);
             }
             requestAnimationFrame(render);
-	    
-	        // Show matrix
-            showMatrix(matrix);
         }
     }
 }
 
+// Returns ImageData object rotated by angle
 function rotateImage(angle) {
     // Create a new image data object to hold the new image
     var newImageData = ctx.createImageData(width, height);
@@ -58,7 +60,7 @@ function rotateImage(angle) {
     var transToOrigin = GetTranslationMatrix(-width/2, -height/2);
     var rotate = GetRotationMatrix(angle);
     var transBack = GetTranslationMatrix(width/2, height/2);
-    var matrix = MultiplyMatrixMatrix(rotate, transToOrigin); 
+    matrix = MultiplyMatrixMatrix(rotate, transToOrigin); 
     matrix = MultiplyMatrixMatrix(transBack, matrix);
     
     // Loop through all the pixels in the image and set its color
