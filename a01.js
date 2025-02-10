@@ -41,7 +41,7 @@ var upload = function () {
             // *** Modify/remove the following code and implement animation
 
 	    // Create a new image data object to hold the new image
-            var newImageData = ctx.createImageData(width, height);
+        var newImageData = ctx.createImageData(width, height);
 	    var transMatrix = GetTranslationMatrix(0, height);// Translate image
 	    var scaleMatrix = GetScalingMatrix(1, -1);// Flip image y axis
 	    var matrix = MultiplyMatrixMatrix(transMatrix, scaleMatrix);// Mix the translation and scale matrices
