@@ -10,6 +10,7 @@
 var input = document.getElementById("load_image");
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
+var gl = canvas.getContext('webgl');
 
 // The width and height of the image
 var width = 0;
@@ -31,45 +32,53 @@ var upload = function () {
             var file_data = fReader.result;
             parsePPM(file_data);
 
-            /*
-            * TODO: ADD CODE HERE TO DO 2D TRANSFORMATION and ANIMATION
-            * Modify any code if needed
-            * Hint: Write a rotation method, and call WebGL APIs to reuse the method for animation
-            */
-	    
-            // *** The code below is for the template to show you how to use matrices and update pixels on the canvas.
-            // *** Modify/remove the following code and implement animation
+            var angle = 0
 
-	    // Create a new image data object to hold the new image
-        var newImageData = ctx.createImageData(width, height);
-	    var transMatrix = GetTranslationMatrix(0, height);// Translate image
-	    var scaleMatrix = GetScalingMatrix(1, -1);// Flip image y axis
-	    var matrix = MultiplyMatrixMatrix(transMatrix, scaleMatrix);// Mix the translation and scale matrices
+            function render() {
             
-            // Loop through all the pixels in the image and set its color
-            for (var i = 0; i < ppm_img_data.data.length; i += 4) {
-
-                // Get the pixel location in x and y with (0,0) being the top left of the image
-                var pixel = [Math.floor(i / 4) % width, 
-                             Math.floor(i / 4) / width, 1];
-        
-                // Get the location of the sample pixel
-                var samplePixel = MultiplyMatrixVector(matrix, pixel);
-
-                // Floor pixel to integer
-                samplePixel[0] = Math.floor(samplePixel[0]);
-                samplePixel[1] = Math.floor(samplePixel[1]);
-
-                setPixelColor(newImageData, samplePixel, i);
+                var newImageData = rotateImage(angle)
+                ctx.putImageData(newImageData, canvas.width/2 - width/2, canvas.height/2 - height/2);
+                angle = angle == 360 ? 0 : angle + 2;
+            
+                requestAnimationFrame(render);
             }
-
-            // Draw the new image
-            ctx.putImageData(newImageData, canvas.width/2 - width/2, canvas.height/2 - height/2);
+            requestAnimationFrame(render);
 	    
-	    // Show matrix
+	        // Show matrix
             showMatrix(matrix);
         }
     }
+}
+
+function rotateImage(angle) {
+    // Create a new image data object to hold the new image
+    var newImageData = ctx.createImageData(width, height);
+
+    // Calculate transformation matrix
+    var transToOrigin = GetTranslationMatrix(-width/2, -height/2);
+    var rotate = GetRotationMatrix(angle);
+    var transBack = GetTranslationMatrix(width/2, height/2);
+    var matrix = MultiplyMatrixMatrix(rotate, transToOrigin); 
+    matrix = MultiplyMatrixMatrix(transBack, matrix);
+    
+    // Loop through all the pixels in the image and set its color
+    for (var i = 0; i < ppm_img_data.data.length; i += 4) {
+
+        // Get the pixel location in x and y with (0,0) being the top left of the image
+        var pixel = [Math.floor(i / 4) % width, 
+                        Math.floor(i / 4) / width, 1];
+
+        // Get the location of the sample pixel
+        var samplePixel = MultiplyMatrixVector(matrix, pixel);
+
+        // Floor pixel to integer
+        samplePixel[0] = Math.floor(samplePixel[0]);
+        samplePixel[1] = Math.floor(samplePixel[1]);
+
+        setPixelColor(newImageData, samplePixel, i);
+    }
+
+    return newImageData;
 }
 
 // Show transformation matrix on HTML
